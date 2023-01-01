@@ -1,0 +1,25 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: allow-pod-tolerations-on-infra-and-master-nodes
+spec:
+  rules:
+  - name: allow-pod-tolerations-on-infra-and-master-nodes
+    resource:
+      resources:
+      - pod
+    operations:
+      - create
+      - update
+      - patch
+    validate:
+      message: Managed OpenShift customers may use tolerations on Pods that could cause those Pods to be scheduled on infra or master nodes
+      patches:
+      - op: add
+        path: /spec/template/spec/tolerations
+        value:
+          - key: node-role.kubernetes.io/master
+            effect: NoSchedule
+          - key: node-role.kubernetes.io/infra
+            effect: NoSchedule
+

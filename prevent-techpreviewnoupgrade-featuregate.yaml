@@ -1,0 +1,27 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: prevent-techpreviewnoupgrade-featuregate
+spec:
+  rules:
+  - name: prevent-techpreviewnoupgrade-featuregate
+    match:
+      apiGroup: config.openshift.io
+      kind: ClusterVersion
+      metadata:
+        name: version
+    resource:
+      resources:
+      - clusterversion
+    operations:
+      - create
+      - update
+      - patch
+    validate:
+      message: Managed OpenShift Customers may not use TechPreviewNoUpgrade FeatureGate that could prevent any future ability to do a y-stream upgrade to their clusters
+      patches:
+      - op: remove
+        path: /spec/spec/features/TechPreviewNoUpgrade
+      deny:
+        message: Managed OpenShift Customers may not use TechPreviewNoUpgrade FeatureGate that could prevent any future ability to do a y-stream upgrade to their clusters
+

@@ -1,0 +1,24 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: allow-log-retention-outside-range
+spec:
+  rules:
+  - name: allow-log-retention-outside-range
+    resource:
+      resources:
+      - pod
+      - deployment
+      - statefulset
+      - daemonset
+    operations:
+      - create
+      - update
+      - patch
+    validate:
+      message: Managed OpenShift customers may set log retention outside the allowed range of 0-7 days
+      patches:
+      - op: replace
+        path: /spec/template/spec/containers/0/logging/retention
+        value: "14d"
+
