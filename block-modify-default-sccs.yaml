@@ -1,29 +1,26 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: block-modify-default-sccs
+  name: deny-update-scc-anyuid
 spec:
+  background: false
   rules:
-  - name: block-modify-default-sccs
-    match:
-      metadata:
-        name:
-        - anyuid
-        - hostaccess
-        - hostmount-anyuid
-        - hostnetwork
-        - node-exporter
-        - nonroot
-        - privileged
-        - restricted
-    resource:
-      resources:
-      - scc
-    operations:
-      - create
-      - update
-      - patch
-      - delete
-    deny:
-      message: Modifying default Security Context Constraints is not allowed.
-
+    - match:
+        any:
+          - resources:
+              kinds:
+                - SecurityContextConstraints
+              names:
+                - anyuid
+                - hostaccess
+                - hostmount-anyuid
+                - hostnetwork
+                - node-exporter
+                - nonroot
+                - privileged
+                - restricted
+      name: anyuid
+      validate:
+        deny: {}
+        message: Cannot edit the SCC anyuid
+  validationFailureAction: enforc
