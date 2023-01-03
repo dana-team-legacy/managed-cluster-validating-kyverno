@@ -20,7 +20,18 @@ spec:
                 - privileged
                 - restricted
       name: anyuid
+      preconditions:
+        any:
+          - key: '{{ request.operation }}'
+            operator: Equals
+            value: CREATE
+          - key: '{{ request.operation }}'
+            operator: Equals
+            value: UPDATE
+          - key: '{{ request.operation }}'
+            operator: Equals
+            value: DELETE
       validate:
         deny: {}
         message: Cannot edit the SCC anyuid
-  validationFailureAction: enforc
+  validationFailureAction: enforce
