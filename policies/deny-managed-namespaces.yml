@@ -1,0 +1,51 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: deny-managed-namespaces
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: Disallow actions on resources in managed namespaces 
+    match:
+      any:
+      - resources:
+          kinds:
+          - "*"
+    context:
+    - name: namespaces
+      configMap:
+        name: namespaces
+        namespace: rks-monitoring
+    - name: privileged
+      configMap:
+        name: privileged
+        namespace: rks-monitoring
+    preconditions:
+      any:
+      - key: "{{ request.namespace || '' }}"
+        operator: AnyIn
+        value: "{{ namespaces.data.managedNamespaces | parse_yaml(@) }}"
+      - key: "{{ request.object.metadata.name || '' }}"
+        operator: AnyIn
+        value: "{{ namespaces.data.managedNamespaces | parse_yaml(@) }}"
+      - key: "{{ request.namespace || '' }}"
+        operator: AnyIn
+        value: "{{ namespaces.data.ocpNamespaces | parse_yaml(@) }}"
+      - key: "{{ request.object.metadata.name || '' }}"
+        operator: AnyIn
+        value: "{{ namespaces.data.ocpNamespaces | parse_yaml(@) }}"
+    validate:
+      message: "Prevented from accessing Run Kubernetes Service (RKS) managed namespaces. Managed RKS customers may not modify namespaces specified in the [openshift-monitoring/namespaces] ConfigMap because customer workloads should be placed in customer-created namespaces."
+      deny:
+        conditions:
+          all:
+          - key: "{{ privileged.data.groups | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.groups }}"
+          - key: "{{ privileged.data.users | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.username }}"
+          - key: "{{ privileged.data.serviceAccountNamespaces | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ serviceAccountNamespace }}"
