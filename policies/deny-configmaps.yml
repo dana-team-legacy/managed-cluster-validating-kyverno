@@ -1,0 +1,41 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: deny-configmaps
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: Disallow modification of certain ConfigMaps
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+    context:
+    - name: privileged
+      configMap:
+        name: privileged
+        namespace: rks-monitoring
+    preconditions:
+      any:
+      - key: "{{ request.namespace || '' }}"
+        operator: Equals
+        value: "openshift-config"
+      - key: "{{ request.object.metadata.name || '' }}"
+        operator: Equals
+        value: "user-ca-bundle"
+    validate:
+      message: "Prevented modification of ConfigMaps that are called [user-ca-bundle] or that live in namespace [openshift-config]. This is in an effort to prevent harmful actions that may cause unintended consequences or affect the stability of the cluster."
+      deny:
+        conditions:
+          all:
+          - key: "{{ privileged.data.groups | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.groups }}"
+          - key: "{{ privileged.data.users | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.username }}"
+          - key: "{{ privileged.data.serviceAccountNamespaces | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ serviceAccountNamespace }}"

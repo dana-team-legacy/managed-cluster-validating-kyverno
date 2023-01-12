@@ -1,0 +1,36 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: deny-rks-ownership
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: Disallow actions on resources in the protected namespaces 
+    match:
+      any:
+      - resources:
+          kinds:
+          - "*"
+          selector:
+            matchLabels:
+              rks.dana.io/managed: 'true'
+    context:
+    - name: privileged
+      configMap:
+        name: privileged
+        namespace: rks-monitoring
+    validate:
+      message: "Prevented from accessing Run Kubernetes Service (RKS) managed resources. This is in an effort to prevent harmful actions that may cause unintended consequences or affect the stability of the cluster. Managed RKS customers may not edit certain managed resources. A managed resource has a \"rks.dana.io/managed\": \"true\" label."
+      deny:
+        conditions:
+          all:
+          - key: "{{ privileged.data.groups | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.groups }}"
+          - key: "{{ privileged.data.users | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.username }}"
+          - key: "{{ privileged.data.serviceAccountNamespaces | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ serviceAccountNamespace }}"

@@ -1,0 +1,52 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: deny-default-sccs
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: Disallow modification of certain ConfigMaps
+    match:
+      any:
+      - resources:
+          kinds:
+          - security.openshift.io/*/SecurityContextConstraints
+          names:
+          - anyuid
+          - hostaccess
+          - hostmount-anyuid
+          - hostnetwork
+          - hostnetwork-v2
+          - node-exporter
+          - nonroot
+          - nonroot-v2
+          - privileged
+          - restricted
+          - restricted-v2
+    context:
+    - name: privileged
+      configMap:
+        name: privileged
+        namespace: rks-monitoring
+    preconditions:
+      all:
+      - key: "{{request.operation || 'BACKGROUND'}}"
+        operator: AnyIn
+        value:
+          - UPDATE
+          - DELETE
+    validate:
+      message: "Prevented modification of default SCCs: Prevents modification of default SCCs [anyuid, hostaccess, hostmount-anyuid, hostnetwork, hostnetwork-v2, node-exporter, nonroot, nonroot-v2, privileged, restricted, restricted-v2]. This is in an effort to prevent harmful actions that may cause unintended consequences or affect the stability of the cluster."
+      deny:
+        conditions:
+          all:
+          - key: "{{ privileged.data.groups | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.groups }}"
+          - key: "{{ privileged.data.users | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.username }}"
+          - key: "{{ privileged.data.serviceAccountNamespaces | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ serviceAccountNamespace }}"

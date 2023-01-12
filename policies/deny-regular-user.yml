@@ -1,0 +1,46 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: deny-regular-user
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: Disallow actions on specific APIgroups
+    match:
+      any:
+      - resources:
+          kinds:
+          - cloudcredential.openshift.io/v1/*
+          - machine.openshift.io/v1beta1/*
+          - autoscaling.openshift.io/*/ClusterAutoscaler
+          - autoscaling.openshift.io/*/MachineAutoscaler
+          - config.openshift.io/*/ClusterVersion
+          - config.openshift.io/*/Scheduler
+          - config.openshift.io/*/APIServer
+          - config.openshift.io/*/Proxy
+          - config.openshift.io/*/FeatureGate
+          - machineconfiguration.openshift.io/*/MachineConfig
+          - machineconfiguration.openshift.io/*/MachineConfigPool
+          - operator.openshift.io/*/KubeAPIServer
+          - operator.openshift.io/*/OpenShiftAPIServer
+          - network.openshift.io/*/NetNamespace
+    context:
+    - name: privileged
+      configMap:
+        name: privileged
+        namespace: rks-monitoring
+    validate:
+      message: "Prevented from accessing Run Kubernetes Service (RKS) managed resources. This is in an effort to prevent harmful actions that may cause unintended consequences or affect the stability of the cluster. Managed RKS customers may not manage any objects in the following APIgroups [autoscaling.openshift.io config.openshift.io operator.openshift.io network.openshift.io machine.openshift.io admissionregistration.k8s.io cloudcredential.openshift.io], nor may Managed RKS customers alter the APIServer, KubeAPIServer, OpenShiftAPIServer, ClusterVersion, Node or SubjectPermission objects."
+      deny:
+        conditions:
+          all:
+          - key: "{{ privileged.data.groups | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.groups }}"
+          - key: "{{ privileged.data.users | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.username }}"
+          - key: "{{ privileged.data.serviceAccountNamespaces | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ serviceAccountNamespace }}"

@@ -1,0 +1,38 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: deny-node-update
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: Disallow modification of Node
+    match:
+      any:
+      - resources:
+          kinds:
+          - Node
+    context:
+    - name: privileged
+      configMap:
+        name: privileged
+        namespace: rks-monitoring
+    preconditions:
+      all:
+      - key: "{{request.operation || 'BACKGROUND'}}"
+        operator: Equals
+        value: UPDATE
+    validate:
+      message: "Prevented modification of a node. To modify node labels or taints, use a different tool. This is in an effort to prevent harmful actions that may cause unintended consequences or affect the stability of the cluster."
+      deny:
+        conditions:
+          all:
+          - key: "{{ privileged.data.groups | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.groups }}"
+          - key: "{{ privileged.data.users | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ request.userInfo.username }}"
+          - key: "{{ privileged.data.serviceAccountNamespaces | parse_yaml(@) }}"
+            operator: AllNotIn
+            value: "{{ serviceAccountNamespace }}"

@@ -1,8 +1,20 @@
-# managed-cluster-validating-kyverno
+# Managed Cluster Validating Webhooks with Kyverno
+This repository contains a number of `Kyervno` policies (`ClusterPolicy`) which are aimed to deny certain operations from a cutsomer in a Run Kubernrtes Service (`RKS`) solution. The policies are inspired heavily by  Red Hat's [managed-cluster-validating-webhooks](https://github.com/openshift/managed-cluster-validating-webhooks) repository, which conatins webhooks in Go for Red Hat's `ROSA` solution.
 
-- [clusterlogging-validation](https://github.com/dana-team/managed-cluster-validating-kyverno/blob/main/allow-log-retention-outside-range.yaml): Managed OpenShift Customers may set log retention outside the allowed range of 0-7 days
-- [scc-validation](https://github.com/dana-team/managed-cluster-validating-kyverno/blob/main/block-modify-default-sccs.yaml): Managed OpenShift Customers may not modify the following default SCCs: [anyuid hostaccess hostmount-anyuid hostnetwork node-exporter nonroot privileged restricted]
-- [regular-user-validation](https://github.com/dana-team/managed-cluster-validating-kyverno/blob/main/prevent-object-management.yaml): Managed OpenShift customers may not manage any objects in the following APIgroups [autoscaling.openshift.io config.openshift.io operator.openshift.io network.openshift.io machine.openshift.io admissionregistration.k8s.io splunkforwarder.managed.openshift.io upgrade.managed.openshift.io ocmagent.managed.openshift.io cloudcredential.openshift.io addons.managed.openshift.io cloudingress.managed.openshift.io managed.openshift.io], nor may Managed OpenShift customers alter the APIServer, KubeAPIServer, OpenShiftAPIServer, ClusterVersion, Node or SubjectPermission objects.
-- [pod-validation](https://github.com/dana-team/managed-cluster-validating-kyverno/blob/main/allow-pod-tolerations-on-infra-and-master-nodes.yaml): Managed OpenShift Customers may use tolerations on Pods that could cause those Pods to be scheduled on infra or master nodes.
-- [namespace-validation](https://github.com/dana-team/managed-cluster-validating-kyverno/blob/main/prevent-modify-namespaces-and-labels.yaml): Managed OpenShift Customers may not modify namespaces specified in the [openshift-monitoring/addons-namespaces openshift-monitoring/managed-namespaces openshift-monitoring/ocp-namespaces] ConfigMaps because customer workloads should be placed in customer-created namespaces. Customers may not create namespaces identified by this regular expression (^com$|^io$|^in$) because it could interfere with critical DNS resolution. Additionally, customers may not set or change the values of these Namespace labels [managed.openshift.io/storage-pv-quota-exempt managed.openshift.io/service-lb-quota-exempt].
-- [techpreviewnoupgrade-validation](https://github.com/dana-team/managed-cluster-validating-kyverno/blob/main/prevent-techpreviewnoupgrade-featuregate.yaml): Managed OpenShift Customers may not use TechPreviewNoUpgrade FeatureGate that could prevent any future ability to do a y-stream upgrade to their clusters.
+## Kyverno
+Kyverno is a policy engine designed for Kubernetes. For information about how to write `Kyverno` policies, [follow the documentation on their website](https://kyverno.io/docs/).
+
+## Included Policies
+All the `Kyervno` policies are under the `policies/` directory in this repository. The policies reference ConfigMaps which include things like the managed namespaces and the privileged users; the ConfigMaps can be found in the `manifests/` directory.
+
+The following table summarizes the policies that exist in this repository:
+
+| Policy Name 	| Description 	|
+|---	|---	|
+| `deny-managed-namespaces` 	| Prevents access to RKS managed namespaces. Managed RKS customers may not modify namespaces specified in the `openshift-monitoring/namespaces` ConfigMap because customer workloads should be placed in customer-created namespaces. 	|
+| `deny-rks-ownership` 	| Prevents access to RKS managed resources. A managed resource has a `"rks.dana.io/managed": "true"` label. 	|
+| `deny-regular-users` 	| Prevents access to RKS managed resources. Managed RKS customers may not manage any objects in the following APIgroups [`autoscaling.openshift.io` `config.openshift.io` `operator.openshift.io` `network.openshift.io` `machine.openshift.io` `admissionregistration.k8s.io` `cloudcredential.openshift.io`], nor may Managed RKS customers alter the `APIServer`, `KubeAPIServer`, `OpenShiftAPIServer` or `ClusterVersion` objects. 	|
+| `deny-configmaps` 	| Prevents modification of ConfigMaps that are called `user-ca-bundle` or that live in namespace `openshift-config`. 	|
+| `deny-default-scc` 	| Prevents modification of default SCCs `anyuid`, `hostaccess`, `hostmount-anyuid`, `hostnetwork`, `hostnetwork-v2`, `node-exporter`, `nonroot`, `nonroot-v2`, `privileged`, `restricted`, `restricted-v2` 	|
+| `deny-node-update` 	| Prevents modification of a node 	|
+| `deny-prometheus-rule` 	| Prevents creation of a PrometheusRule in RKS managed namespaces 	|
