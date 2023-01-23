@@ -18,3 +18,12 @@ The following table summarizes the policies that exist in this repository:
 | `deny-default-scc` 	| Prevents modification of default SCCs `anyuid`, `hostaccess`, `hostmount-anyuid`, `hostnetwork`, `hostnetwork-v2`, `node-exporter`, `nonroot`, `nonroot-v2`, `privileged`, `restricted`, `restricted-v2` 	|
 | `deny-node-update` 	| Prevents modification of a node 	|
 | `deny-prometheus-rule` 	| Prevents creation of a PrometheusRule in RKS managed namespaces 	|
+
+## Build
+In order to create a single YAML containing the latest `Kyverno` manifests, use the `make build` directive of the `Makefile`.
+
+```
+$ make build
+```
+
+The output is a `manifests/kyverno.yaml` file which can be used to deploy `Kyverno` on an OpenShift cluster and can be used in Production, as per the `Kyverno` [installation page](https://kyverno.io/docs/installation/). including the changes needed to enable the `Node` [policy](https://kyverno.io/policies/other/protect_node_taints/protect-node-taints/).
