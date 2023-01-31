@@ -26,6 +26,11 @@ build: template
 	cat $(MANIFESTS)/namespace.yaml >> $(MANIFESTS)/kyverno.yaml
 	for f in $(MANIFESTS)/$(NAME)/templates/*.yaml ; do cat $$f >> $(MANIFESTS)/kyverno.yaml ; done
 
+.PHONY: build-offline
+build-offline: build
+	chmod +x $(OFFLINE-SCRIPT)
+	bash $(OFFLINE-SCRIPT) -c $(MANIFESTS)
+
 .PHONY: unbuild
 unbuild:
 	rm -r $(MANIFESTS)/$(NAME)
@@ -42,6 +47,9 @@ $(LOCALBIN):
 MANIFESTS ?= $(shell pwd)/manifests
 $(MANIFESTS):
 	mkdir -p $(MANIFESTS)
+
+# Location to search for images for offline installation
+OFFLINE-SCRIPT ?= $(shell pwd)/scripts/offline-bundle.sh
 
 ## Tool Versions
 HELM_VERSION ?= v3.10.3
