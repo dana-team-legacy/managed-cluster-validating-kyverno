@@ -190,7 +190,7 @@ DISTDIR="${DISTBASE}/${DRIVERDIR}"
 DISTFILE="${DISTBASE}/${DRIVERDIR}.tar.gz"
 IMAGEMANIFEST="${REPODIR}/scripts/images.manifest"
 IMAGEFILEDIR="${REPODIR}/scripts/images.tar"
-MANIFESTSDIR=$2
+MANIFESTSDIR="${REPODIR}/manifests"
 
 # directories to search all files for image names
 DIRS_FOR_IMAGE_NAMES=(

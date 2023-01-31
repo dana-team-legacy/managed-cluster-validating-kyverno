@@ -28,8 +28,11 @@ build: template
 
 .PHONY: build-offline
 build-offline: build
-	chmod +x $(OFFLINE-SCRIPT)
-	bash $(OFFLINE-SCRIPT) -c $(MANIFESTS)
+	bash $(OFFLINE-SCRIPT) -c
+
+.PHONY: unpack-offline
+unpack-offline:
+	bash $(OFFLINE-SCRIPT) -p -r $(INTERNAL-REGISTRY)
 
 .PHONY: unbuild
 unbuild:
@@ -50,6 +53,9 @@ $(MANIFESTS):
 
 # Location to search for images for offline installation
 OFFLINE-SCRIPT ?= $(shell pwd)/scripts/offline-bundle.sh
+
+# Private registry for offline installation
+INTERNAL-REGISTRY ?= my.registry.com:5000/X/Y
 
 ## Tool Versions
 HELM_VERSION ?= v3.10.3
