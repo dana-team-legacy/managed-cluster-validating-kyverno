@@ -22,9 +22,14 @@ patch-node: template
 
 .PHONY: build
 build: template
-	echo -n > $(MANIFESTS)/kyverno.yml
+	echo -n > $(MANIFESTS)/kyverno.yaml
 	cat $(MANIFESTS)/namespace.yaml >> $(MANIFESTS)/kyverno.yaml
-	for f in $(MANIFESTS)/$(NAME)/templates/*.yaml ; do cat $$f >> $(MANIFESTS)/kyverno.yml ; done
+	for f in $(MANIFESTS)/$(NAME)/templates/*.yaml ; do cat $$f >> $(MANIFESTS)/kyverno.yaml ; done
+
+.PHONY: unbuild
+unbuild:
+	rm -r $(MANIFESTS)/$(NAME)
+	rm $(MANIFESTS)/kyverno.yaml
 
 ##@ Build Dependencies
 
