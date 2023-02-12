@@ -22,7 +22,7 @@ The following table summarizes the policies that exist in this repository:
 ## Build for OpenShift
 The only supported way to install Kyverno in Production is using `helm`. However, at times it's more preferable to create an `all-in-one.yaml` that can be installed using `kubectl`.
 
-A `Makfile` takes care of all the things necessary in order to install Kyverno on OpenShift and in an offline environment.
+A `Makefile` takes care of all the things necessary in order to install Kyverno on OpenShift and in an offline environment.
 
 In order to create a single YAML containing the latest `Kyverno` manifests, use the `make build` directive of the `Makefile`.
 
