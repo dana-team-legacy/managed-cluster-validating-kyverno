@@ -22,9 +22,22 @@ patch-node: template
 
 .PHONY: build
 build: template
-	echo -n > $(MANIFESTS)/kyverno.yml
+	echo -n > $(MANIFESTS)/kyverno.yaml
 	cat $(MANIFESTS)/namespace.yaml >> $(MANIFESTS)/kyverno.yaml
-	for f in $(MANIFESTS)/$(NAME)/templates/*.yaml ; do cat $$f >> $(MANIFESTS)/kyverno.yml ; done
+	for f in $(MANIFESTS)/$(NAME)/templates/*.yaml ; do cat $$f >> $(MANIFESTS)/kyverno.yaml ; done
+
+.PHONY: build-offline
+build-offline: build
+	bash $(OFFLINE-SCRIPT) -c
+
+.PHONY: unpack-offline
+unpack-offline:
+	bash $(OFFLINE-SCRIPT) -p -r $(INTERNAL-REGISTRY)
+
+.PHONY: unbuild
+unbuild:
+	rm -r $(MANIFESTS)/$(NAME)
+	rm $(MANIFESTS)/kyverno.yaml
 
 ##@ Build Dependencies
 
@@ -37,6 +50,12 @@ $(LOCALBIN):
 MANIFESTS ?= $(shell pwd)/manifests
 $(MANIFESTS):
 	mkdir -p $(MANIFESTS)
+
+# Location to search for images for offline installation
+OFFLINE-SCRIPT ?= $(shell pwd)/scripts/offline-bundle.sh
+
+# Private registry for offline installation
+INTERNAL-REGISTRY ?= my.registry.com:5000/X/Y
 
 ## Tool Versions
 HELM_VERSION ?= v3.10.3
